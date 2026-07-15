@@ -1,0 +1,107 @@
+SELECT *
+FROM Logistics.Logistics as logistics
+
+-- Inventory Analysis 
+
+-- 1. What is the average inventory level across all shipments?
+select avg(inventory_level) as avg_inventory 
+from Logistics.Logistics
+# The average inventory level is about 297.91
+
+-- 2. Which shipment had the lowest inventory levels?
+select Asset_ID, Inventory_Level, Waiting_Time, Traffic_Status
+from `Logistics.Logistics`
+order by Inventory_Level asc
+limit 1
+-- The the shipment with the lowest inventory is Truck_4 with 100 inventory level, 19 waiting time, and clear traffic status
+
+-- 3. Which trucks frequently operate with low inventory levels?
+select Asset_ID, Inventory_Level, Waiting_Time, Traffic_Status
+from `Logistics.Logistics`
+where Inventory_Level = (select min(Inventory_level) 
+from `Logistics.Logistics`)
+-- These 7 trucks operate frequently with low inventory
+
+-- 4. Which operational factors contribute most to logistics delays?
+select
+    Traffic_Status,
+    count(*) as total_shipments,
+    sum(Logistics_Delay) as delayed_shipments,
+    round(100.0 * sum(Logistics_Delay) / count(*), 1) as delay_rate_pct
+from `Logistics.Logistics`
+group by Traffic_Status
+order by delay_rate_pct desc;
+-- Heavy traffic status has 327 total shipments, 327 delayed shipments, and 100% delay rate 
+-- Detour traffic status has 345 total shipments, 124 delayed shipments, and 35.9% delay rate
+-- Clear traffic status has 328 total shipments, 115 delayed shipments, and 35.1% delay rate 
+
+-- 5. Which trucks perform most efficiently?
+
+-- which trucks perform most efficiently
+select Logistics.Asset_ID,
+avg(Logistics.Asset_Utilization) as average_asset_utilization
+from `mid-south-logistics`.`Logistics`.`Logistics` as Logistics 
+group by Logistics.Asset_ID
+order by
+avg(Logistics.Asset_Utilization) desc;
+-- These top 10 trucks are perforoming the efficiently from their averages 
+
+-- 6. How can the company reduce waiting time and improve customer satisfaction?
+select
+  Traffic_Status,
+  round(avg(Waiting_Time), 2) AS avg_waiting_time
+from
+  `mid-south-logistics`.`Logistics`.`Logistics`
+group by Traffic_Status
+order by  avg_waiting_time;
+-- Heavy traffic status has a 34.32% waiting time
+-- Detour traffic has a 35.31% waiting time
+-- Clear traffic has a 35.54% waiting time 
+select
+    Logistics_Delay_Reason,
+    round(avg(Waiting_Time), 1) as avg_waiting_time
+from `Logistics.Logistics`
+group by Logistics_Delay_Reason
+order by avg_waiting_time desc;
+-- With traffic the avg wait time is 35.9%
+-- With mechanical failure the avg wait time is 35.9%
+-- With nothing the avg wait time is 34.3%
+-- With weather the avg wait time is 34.3%
+select
+    Shipment_Status,
+    round(avg(Waiting_Time), 1) as avg_waiting_time
+from `Logistics.Logistics`
+group by Shipment_Status
+order by avg_waiting_time desc;
+-- Transit the avg waiting time is 35.4%
+-- Delivered the avg waiting time is 35.3%
+-- Delayed the avg waiting time is 34.6%
+-- The best way for the company to reduce waiting time and improve customer satisfaction is to attack one of the issues that are present in the moment. This could be to re-route around the heavy traffic, attack the delay rate, or fix the mechanical faliures that are going on with the trucks. But by at least doing one of these things, it can fix the averges just a bit more to the companies liking. 
+
+-- Environmental Conditions
+
+-- 7. What are the average temperature and humidity during delayed shipments?
+select
+    Logistics_Delay,
+    round(avg(Temperature), 2) as avg_temperature,
+    round(avg(Humidity), 2) as avg_humidity
+from `Logistics.Logistics`
+group by Logistics_Delay;
+-- For delayed shipments the average tempature is 23.78 while average humidity is 65.04
+
+-- Customer & Sales
+
+-- 8. What is the average transaction amount by shipment status?
+select
+    Shipment_Status,
+    round(avg(User_Transaction_Amount), 2) as avg_transaction_amount
+from `Logistics.Logistics`
+group by Shipment_Status
+order by avg_transaction_amount desc;
+-- Delayed avg_transaction is $302.51
+-- In transit avg_transaction is $302.26
+-- Delivered avg_transaction is $292.53
+
+-- 9. What is the main problem with this company and how can we fix it?
+-- When analyzing the business you can see the main component to the problems is when there is heavy traffic on the road. Delay and waiting time is a major problem, and heavy traffic has a 100% delay rate with 34% waiting time.
+-- All around the best way we could possibly fix this is by treating the mechanical failures, re-routing before driving into a heacy traffic zone, and better communication with the customers rather than acting late. 
